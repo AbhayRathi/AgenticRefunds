@@ -138,19 +138,12 @@ export const X402Button: React.FC<X402ButtonProps> = ({
     setIsProcessing(true);
     
     try {
-      const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
-      const response = await fetch(`${API_BASE_URL}/refunds/negotiate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          orderId,
-          customerId,
-          walletAddress: customerWalletAddress,
-          choice
-        })
+      const negotiationResult = await refundService.negotiateRefund({
+        orderId,
+        customerId,
+        walletAddress: customerWalletAddress,
+        choice
       });
-
-      const negotiationResult = await response.json();
       
       if (choice === 'credit') {
         setCurrentCredit(negotiationResult.newCreditBalance);

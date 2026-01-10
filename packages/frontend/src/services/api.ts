@@ -41,5 +41,20 @@ export const refundService = {
   async healthCheck(): Promise<any> {
     const response = await axios.get('/health');
     return response.data;
+  },
+
+  async negotiateRefund(data: {
+    orderId: string;
+    customerId: string;
+    walletAddress: string;
+    choice: 'cash' | 'credit';
+  }): Promise<any> {
+    const response = await axios.post(`${API_BASE_URL}/refunds/negotiate`, data);
+    return response.data;
+  },
+
+  async getUserLedger(userId: string): Promise<any> {
+    const response = await axios.get(`${API_BASE_URL}/refunds/ledger/${userId}`);
+    return response.data;
   }
 };
