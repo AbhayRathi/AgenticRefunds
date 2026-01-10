@@ -1,7 +1,8 @@
-import { mockService } from './mock';
-// import { realService } from './real'; // Uncomment when backend ready
+// import { mockService } from './mock';
+import { realService } from './real';
 
-// SWAP POINT: Change this to realService when backend is ready
-export const agentService = mockService;
+// SWAP POINT: Now using real backend services
+export const agentService = realService;
 
-export * from './mock';
+// Export AgentService type from real.ts (avoid duplicate export from mock.ts)
+export type { AgentService } from './real';
