@@ -1,3 +1,5 @@
+import { z } from 'zod';
+
 // x402 Protocol Types
 export interface X402Payment {
   amount: string;
@@ -173,3 +175,87 @@ export interface SimulationConfig {
   enableLatency: boolean;
   latencyMs?: number;
 }
+
+// Agentic Commerce Types
+export enum ToolCategory {
+  LOGISTICS = 'Logistics',
+  FOOD = 'Food',
+  RESOLUTION = 'Resolution'
+}
+
+export enum AgentSessionStatus {
+  PLANNING = 'Planning',
+  PAYING = 'Paying',
+  MONITORING = 'Monitoring',
+  RESOLVING = 'Resolving'
+}
+
+export enum ThoughtLevel {
+  INFO = 'info',
+  WARNING = 'warning',
+  ERROR = 'error',
+  DEBUG = 'debug'
+}
+
+// X402Tool Interface
+export interface X402Tool {
+  name: string;
+  version: string;
+  endpoint: string;
+  priceUsdc: number;
+  category: ToolCategory;
+  reliabilityScore: number;
+}
+
+// AgentSession Interface
+export interface AgentSession {
+  session_id: string;
+  status: AgentSessionStatus;
+  totalSpent: number;
+  thoughtLog: ThoughtLogEntry[];
+}
+
+export interface ThoughtLogEntry {
+  timestamp: number;
+  level: ThoughtLevel;
+  message: string;
+}
+
+// ReputationIndex for tracking incidents
+export interface ReputationIncident {
+  toolId: string;
+  incidentType: 'Cold' | 'Late' | 'Missing' | 'Wrong';
+  orderId: string;
+  timestamp: number;
+  severity: number; // 0-1 scale
+}
+
+// Zod Schemas for X402Tool
+export const X402ToolSchema = z.object({
+  name: z.string().min(1, 'Tool name is required'),
+  version: z.string().min(1, 'Version is required'),
+  endpoint: z.string().url('Valid endpoint URL is required'),
+  priceUsdc: z.number().nonnegative('Price must be non-negative'),
+  category: z.nativeEnum(ToolCategory),
+  reliabilityScore: z.number().min(0).max(1, 'Reliability score must be between 0 and 1')
+});
+
+// Zod Schema for ThoughtLogEntry
+export const ThoughtLogEntrySchema = z.object({
+  timestamp: z.number().int().nonnegative('Timestamp must be non-negative'),
+  level: z.nativeEnum(ThoughtLevel),
+  message: z.string().min(1, 'Message is required')
+});
+
+// Zod Schema for AgentSession
+export const AgentSessionSchema = z.object({
+  session_id: z.string().min(1, 'Session ID is required'),
+  status: z.nativeEnum(AgentSessionStatus),
+  totalSpent: z.number().nonnegative('Total spent must be non-negative'),
+  thoughtLog: z.array(ThoughtLogEntrySchema)
+});
+
+// Type exports for use in other modules
+export type X402ToolType = z.infer<typeof X402ToolSchema>;
+export type AgentSessionType = z.infer<typeof AgentSessionSchema>;
+export type ThoughtLogEntryType = z.infer<typeof ThoughtLogEntrySchema>;
