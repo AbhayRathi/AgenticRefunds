@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { X402Button } from './components/X402Button';
 import { SimulateLatencyToggle } from './components/SimulateLatencyToggle';
 import { DashboardStats } from './components/DashboardStats';
