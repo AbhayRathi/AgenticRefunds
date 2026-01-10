@@ -242,7 +242,7 @@ export const X402ToolSchema = z.object({
 
 // Zod Schema for ThoughtLogEntry
 export const ThoughtLogEntrySchema = z.object({
-  timestamp: z.number().int().positive('Timestamp must be positive'),
+  timestamp: z.number().int().nonnegative('Timestamp must be non-negative'),
   level: z.nativeEnum(ThoughtLevel),
   message: z.string().min(1, 'Message is required')
 });

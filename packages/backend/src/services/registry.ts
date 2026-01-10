@@ -1,5 +1,5 @@
 import { MongoClient, Collection, Document } from 'mongodb';
-import { X402Tool, ReputationIncident, X402ToolSchema } from '@delivery-shield/shared';
+import { X402Tool, ReputationIncident, X402ToolSchema, ToolCategory } from '@delivery-shield/shared';
 
 export interface ToolDocument extends X402Tool {
   _id?: string;
@@ -149,7 +149,7 @@ export class RegistryService {
     const collection = await this.getToolsCollection();
     return collection
       .find({ 
-        category: category as any,
+        category: category as ToolCategory,
         reliabilityScore: { $gte: 0.5 }
       })
       .toArray();
@@ -214,7 +214,7 @@ export class RegistryService {
       ...validatedTool,
       embedding
     };
-    await collection.insertOne(toolDoc as any);
+    await collection.insertOne(toolDoc);
   }
 
   /**
@@ -223,7 +223,7 @@ export class RegistryService {
    */
   async insertReputationIncident(incident: ReputationIncident): Promise<void> {
     const collection = await this.getReputationCollection();
-    await collection.insertOne(incident as any);
+    await collection.insertOne(incident);
   }
 
   /**
