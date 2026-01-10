@@ -7,6 +7,10 @@ import { RAGService } from './services/rag';
 import { CDPService } from './services/cdp';
 import { RefundController } from './controllers/refund';
 import { createRefundRoutes } from './routes/refund';
+import { TrustController } from './controllers/trust';
+import { ChatController } from './controllers/chat';
+import { createTrustRoutes } from './routes/trust';
+import { createChatRoutes } from './routes/chat';
 import { x402Middleware } from './middleware/x402';
 import { securityMiddleware, rateLimiter } from './middleware/security';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
@@ -43,6 +47,10 @@ let mongoService: MongoDBService;
 let ragService: RAGService;
 let cdpService: CDPService;
 let refundController: RefundController;
+let chatController: ChatController;
+
+// Trust Controller
+const trustController = new TrustController();
 
 function validateEnvironment(): void {
   const required = [
@@ -97,6 +105,7 @@ async function initializeServices() {
 
     // Controllers
     refundController = new RefundController(ragService, cdpService);
+    chatController = new ChatController(ragService);
 
     logger.info('All services initialized successfully');
   } catch (error) {
@@ -162,6 +171,12 @@ app.post('/api/x402-protected',
 initializeServices().then(() => {
   // Refund routes
   app.use('/api/refunds', createRefundRoutes(refundController));
+
+  // Trust routes
+  app.use('/api/trust', createTrustRoutes(trustController));
+
+  // Chat routes
+  app.use('/api/chat', createChatRoutes(chatController));
 
   // 404 handler
   app.use(notFoundHandler);
