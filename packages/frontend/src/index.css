@@ -1,25 +1,24 @@
-:root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+@import "tailwindcss";
 
-  color-scheme: light dark;
-  color: rgba(0, 0, 0, 0.87);
-  background-color: #f5f5f5;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  -webkit-text-size-adjust: 100%;
+/* Custom theme for DoorDash colors */
+@theme {
+  --color-doordash-red: #FF3008;
+  --color-doordash-darkRed: #C41200;
+  --color-doordash-gray: #767676;
+  --color-doordash-lightGray: #F5F5F5;
+  --color-doordash-green: #00A651;
 }
 
+/* DoorDash-style base resets */
 * {
+  -webkit-tap-highlight-color: transparent;
   box-sizing: border-box;
 }
 
 body {
   margin: 0;
+  font-family: 'TTNorms', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
   min-width: 320px;
   min-height: 100vh;
 }
@@ -27,6 +26,39 @@ body {
 #root {
   width: 100%;
   min-height: 100vh;
+}
+
+/* Mobile viewport simulation */
+.mobile-frame {
+  width: 375px;
+  height: 812px;
+  overflow: hidden;
+  border-radius: 40px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+/* Animations */
+@keyframes slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-down {
+  animation: slide-down 0.3s ease-out;
+}
+
+/* Custom delay utilities for bounce animation */
+.delay-100 {
+  animation-delay: 0.1s;
+}
+.delay-200 {
+  animation-delay: 0.2s;
 }
 
 button {
