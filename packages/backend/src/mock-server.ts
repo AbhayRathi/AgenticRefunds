@@ -1,17 +1,42 @@
 import express from 'express';
 import cors from 'cors';
+import compression from 'compression';
 import { 
   RefundStatus, 
   LogEventType,
   OrderStatus
 } from '@delivery-shield/shared';
+import { securityMiddleware, rateLimiter, refundRateLimiter } from './middleware/security';
+import { validateRequest } from './middleware/validation';
+import {
+  RAGEvaluationRequestSchema,
+  RefundProcessRequestSchema,
+  SimulationRequestSchema
+} from './validators/refund.validators';
+import { errorHandler, notFoundHandler } from './middleware/errorHandler';
+import { logger } from './config/logger';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Middleware
+// Security middleware
+app.use(securityMiddleware);
+app.use(rateLimiter);
+
+// Core middleware
 app.use(cors());
-app.use(express.json());
+app.use(compression());
+app.use(express.json({ limit: '10mb' }));
+
+// Request logging
+app.use((req, res, next) => {
+  logger.info({
+    method: req.method,
+    path: req.path,
+    ip: req.ip
+  });
+  next();
+});
 
 // Health check
 app.get('/health', (req, res) => {
@@ -28,7 +53,7 @@ app.get('/health', (req, res) => {
 });
 
 // Mock refund evaluation
-app.post('/api/refunds/evaluate', (req, res) => {
+app.post('/api/refunds/evaluate', validateRequest(RAGEvaluationRequestSchema), (req, res) => {
   const { orderId, systemLogs } = req.body;
   
   // Simple mock logic: check for delayed deliveries
@@ -89,7 +114,7 @@ app.post('/api/refunds/evaluate', (req, res) => {
 });
 
 // Mock refund processing
-app.post('/api/refunds/process', (req, res) => {
+app.post('/api/refunds/process', refundRateLimiter, validateRequest(RefundProcessRequestSchema), (req, res) => {
   const { orderId, customerId, customerWalletAddress, systemLogs, deliveryOrder } = req.body;
 
   // Reuse evaluation logic
@@ -164,7 +189,7 @@ app.get('/api/refunds/status/:refundId', (req, res) => {
 });
 
 // Mock delivery issue simulation
-app.post('/api/refunds/simulate', (req, res) => {
+app.post('/api/refunds/simulate', validateRequest(SimulationRequestSchema), (req, res) => {
   const { issueType, latencyMs } = req.body;
   const now = Date.now();
   const systemLogs: any[] = [];
@@ -217,10 +242,16 @@ app.post('/api/refunds/simulate', (req, res) => {
   res.json({ systemLogs });
 });
 
+// 404 handler
+app.use(notFoundHandler);
+
+// Error handler (must be last)
+app.use(errorHandler);
+
 // Start server
 app.listen(PORT, () => {
-  console.log(`🚀 Delivery Shield MOCK backend running on port ${PORT}`);
-  console.log(`📍 Health check: http://localhost:${PORT}/health`);
-  console.log(`📍 API base: http://localhost:${PORT}/api`);
-  console.log('⚠️  NOTE: This is a mock server for testing without external dependencies');
+  logger.info(`🚀 Delivery Shield MOCK backend running on port ${PORT}`);
+  logger.info(`📍 Health check: http://localhost:${PORT}/health`);
+  logger.info(`📍 API base: http://localhost:${PORT}/api`);
+  logger.warn('⚠️  NOTE: This is a mock server for testing without external dependencies');
 });

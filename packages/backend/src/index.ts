@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import compression from 'compression';
 import dotenv from 'dotenv';
 import { MongoDBService } from './services/mongodb';
 import { RAGService } from './services/rag';
@@ -7,6 +8,9 @@ import { CDPService } from './services/cdp';
 import { RefundController } from './controllers/refund';
 import { createRefundRoutes } from './routes/refund';
 import { x402Middleware } from './middleware/x402';
+import { securityMiddleware, rateLimiter } from './middleware/security';
+import { errorHandler, notFoundHandler } from './middleware/errorHandler';
+import { logger } from './config/logger';
 
 // Load environment variables
 dotenv.config();
@@ -14,9 +18,25 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Middleware
+// Security middleware
+app.use(securityMiddleware);
+app.use(rateLimiter);
+
+// Core middleware
 app.use(cors());
-app.use(express.json());
+app.use(compression());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Request logging
+app.use((req, res, next) => {
+  logger.info({
+    method: req.method,
+    path: req.path,
+    ip: req.ip
+  });
+  next();
+});
 
 // Initialize services
 let mongoService: MongoDBService;
@@ -50,10 +70,10 @@ async function initializeServices() {
     // Controllers
     refundController = new RefundController(ragService, cdpService);
 
-    console.log('All services initialized successfully');
+    logger.info('All services initialized successfully');
   } catch (error) {
-    console.error('Failed to initialize services:', error);
-    console.log('Server will start but some features may not work properly');
+    logger.error('Failed to initialize services:', error);
+    logger.warn('Server will start but some features may not work properly');
   }
 }
 
@@ -86,22 +106,41 @@ initializeServices().then(() => {
   // Refund routes
   app.use('/api/refunds', createRefundRoutes(refundController));
 
+  // 404 handler
+  app.use(notFoundHandler);
+
+  // Error handler (must be last)
+  app.use(errorHandler);
+
   // Start server
   app.listen(PORT, () => {
-    console.log(`🚀 Delivery Shield backend running on port ${PORT}`);
-    console.log(`📍 Health check: http://localhost:${PORT}/health`);
-    console.log(`📍 API base: http://localhost:${PORT}/api`);
+    logger.info(`🚀 Delivery Shield backend running on port ${PORT}`);
+    logger.info(`📍 Health check: http://localhost:${PORT}/health`);
+    logger.info(`📍 API base: http://localhost:${PORT}/api`);
   });
 }).catch(error => {
-  console.error('Failed to start server:', error);
+  logger.error('Failed to start server:', error);
   process.exit(1);
 });
 
 // Graceful shutdown
 process.on('SIGINT', async () => {
-  console.log('Shutting down gracefully...');
+  logger.info('Shutting down gracefully...');
   if (mongoService) {
     await mongoService.disconnect();
   }
   process.exit(0);
 });
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (error) => {
+  logger.error('Uncaught Exception:', error);
+  process.exit(1);
+});
+
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (reason, promise) => {
+  logger.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  process.exit(1);
+});
+
