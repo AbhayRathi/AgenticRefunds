@@ -8,7 +8,6 @@ import { SimulateLatencyToggle } from '../components/SimulateLatencyToggle';
  */
 export function NegotiationDemo() {
   const [simulateLatency, setSimulateLatency] = useState(true);
-  const [refundComplete, setRefundComplete] = useState(false);
 
   return (
     <div style={{
@@ -63,7 +62,7 @@ export function NegotiationDemo() {
           </h2>
           <SimulateLatencyToggle
             enabled={simulateLatency}
-            onToggle={setSimulateLatency}
+            onChange={setSimulateLatency}
           />
           <p style={{
             margin: '0.5rem 0 0 0',
@@ -91,7 +90,6 @@ export function NegotiationDemo() {
             simulateLatency={simulateLatency}
             onRefundComplete={(result) => {
               console.log('Refund completed:', result);
-              setRefundComplete(true);
             }}
           />
         </div>
