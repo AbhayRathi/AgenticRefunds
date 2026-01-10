@@ -138,7 +138,8 @@ export const X402Button: React.FC<X402ButtonProps> = ({
     setIsProcessing(true);
     
     try {
-      const response = await fetch('http://localhost:3001/api/v1/refunds/negotiate', {
+      const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+      const response = await fetch(`${API_BASE_URL}/refunds/negotiate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
