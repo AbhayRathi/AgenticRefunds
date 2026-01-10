@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@delivery-shield/shared': path.resolve(__dirname, '../shared/dist/index.js')
+      '@delivery-shield/shared': path.resolve(__dirname, '../shared/src')
     }
   },
   server: {

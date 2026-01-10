@@ -2,6 +2,8 @@
 
 A Node/TypeScript monorepo implementing an automated refund system for delivery services using x402 protocol, RAG (Retrieval-Augmented Generation) with MongoDB Atlas Vector Search, Google Gemini AI, and Coinbase Developer Platform (CDP) for USDC transfers.
 
+![Delivery Shield Dashboard](https://github.com/user-attachments/assets/426f5058-4908-4b22-8ad6-2767efc6b128)
+
 ## 🌟 Features
 
 - **x402 Protocol Integration**: Express middleware for payment protocol
@@ -11,6 +13,17 @@ A Node/TypeScript monorepo implementing an automated refund system for delivery 
 - **React Dashboard**: Interactive UI with x402 button and latency simulation
 - **Real-time Evaluation**: Analyzes delivery latency, temperature violations, and system errors
 - **Partial & Full Refunds**: Smart percentage calculation based on matched policies
+
+## 📸 Screenshots
+
+### Dashboard - Initial State
+![Dashboard Initial](https://github.com/user-attachments/assets/426f5058-4908-4b22-8ad6-2767efc6b128)
+
+### Successful Refund (Late Delivery)
+![Refund Success](https://github.com/user-attachments/assets/b3e770e4-b1bf-410e-b9c6-0d43a79b1aea)
+
+### Rejected Refund (Normal Delivery)
+![Refund Rejected](https://github.com/user-attachments/assets/c9ce10ba-9f68-4587-8de5-ee6388ffeed3)
 
 ## 🏗️ Architecture
 
@@ -39,62 +52,27 @@ delivery-shield/
 
 ## 🚀 Quick Start
 
-### 1. Clone and Install
+**The fastest way to test without external dependencies:**
 
 ```bash
-git clone https://github.com/AbhayRathi/AgenticRefunds.git
-cd AgenticRefunds
+# Install dependencies
 npm install
-```
 
-### 2. Configure Backend
-
-```bash
-cd packages/backend
-cp .env.example .env
-```
-
-Edit `packages/backend/.env`:
-
-```env
-# MongoDB Atlas
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/delivery_shield
-
-# Google Gemini API
-GEMINI_API_KEY=your_gemini_api_key_here
-
-# Coinbase CDP
-CDP_API_KEY_NAME=your_cdp_api_key_name
-CDP_PRIVATE_KEY=your_cdp_private_key
-CDP_WALLET_ID=optional_wallet_id
-
-# Server
-PORT=3001
-```
-
-### 3. Configure Frontend
-
-```bash
-cd packages/frontend
-cp .env.example .env
-```
-
-### 4. Build and Run
-
-```bash
-# From root directory
+# Build all packages
 npm run build
 
-# Start backend (from packages/backend)
+# Start mock backend (terminal 1)
 cd packages/backend
-npm run dev
+npm run dev:mock
 
-# Start frontend (from packages/frontend, in new terminal)
+# Start frontend (terminal 2)
 cd packages/frontend
 npm run dev
 ```
 
-Access the dashboard at: `http://localhost:3000`
+Visit `http://localhost:3000` to see the dashboard!
+
+**For full setup with MongoDB, Gemini AI, and CDP, see [SETUP.md](./SETUP.md)**
 
 ## 🔧 MongoDB Atlas Vector Search Setup
 
@@ -119,9 +97,22 @@ Access the dashboard at: `http://localhost:3000`
 ## 🎮 Using the Dashboard
 
 1. **View Statistics**: Monitor total orders, refunds, and amounts
-2. **Simulate Latency**: Toggle to test late delivery scenarios
+2. **Simulate Latency**: Toggle ON to test late delivery scenarios (100% refund)
 3. **Request Refund**: Click the x402 button to process a refund
-4. **View Results**: See matched policies, refund amount, and transaction hash
+4. **View Results**: See matched policies, refund amount, reasoning, and mock transaction hash
+5. **Test Normal Delivery**: Toggle OFF to simulate successful deliveries (no refund)
+
+### Example Flows
+
+**Late Delivery (100% Refund)**
+- Enable "Simulate Delivery Issues" toggle
+- Click "Request Refund via x402"
+- Result: Full refund approved with transaction hash
+
+**Normal Delivery (No Refund)**
+- Disable "Simulate Delivery Issues" toggle  
+- Click "Request Refund via x402"
+- Result: Refund rejected, order delivered successfully
 
 ## 🔌 API Endpoints
 
@@ -168,17 +159,25 @@ Common TypeScript types and interfaces used across packages.
 ### @delivery-shield/backend
 Express server with:
 - x402 payment middleware
-- MongoDB Atlas integration
+- MongoDB Atlas integration with Vector Search
 - Gemini AI RAG service
 - CDP wallet management
 - Refund processing logic
+- **Mock server** for testing without external dependencies
 
 ### @delivery-shield/frontend
 React dashboard with:
-- x402 refund button
+- x402 refund button component
 - Latency simulation toggle
-- Real-time statistics
-- Transaction history
+- Real-time statistics dashboard
+- Refund result display with reasoning
+
+## 📚 Documentation
+
+- [SETUP.md](./SETUP.md) - Complete setup instructions for both mock and production
+- [ARCHITECTURE.md](./ARCHITECTURE.md) - Technical architecture and data flow
+- [Backend .env.example](./packages/backend/.env.example) - Environment variables reference
+- [Frontend .env.example](./packages/frontend/.env.example) - Frontend configuration
 
 ## 🔐 Security
 
