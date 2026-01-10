@@ -281,3 +281,17 @@ export const X402ToolPaymentSchema = z.object({
 });
 
 export type X402ToolPayment = z.infer<typeof X402ToolPaymentSchema>;
+
+// Merchant Tool Schema
+export const MerchantToolSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  category: z.enum(['Food', 'Logistics', 'Resolution']),
+  priceUsdc: z.number().min(0),
+  reliabilityScore: z.number().min(0).max(1),
+  supportsCredit: z.boolean().default(true),
+  totalTransactions: z.number().default(0),
+  successRate: z.number().min(0).max(1).default(1.0)
+});
+
+export type MerchantTool = z.infer<typeof MerchantToolSchema>;
