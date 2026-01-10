@@ -35,7 +35,7 @@ describe('Payment Service', () => {
       const result = await paymentService.processRefund(
         'user-123',
         10.0,
-        '0xtest',
+        '0x1234567890123456789012345678901234567890',
         'credit'
       );
 
@@ -50,7 +50,7 @@ describe('Payment Service', () => {
       await paymentService.processRefund(
         'user-123',
         5.0,
-        '0xtest',
+        '0x1234567890123456789012345678901234567890',
         'credit'
       );
 
@@ -63,7 +63,7 @@ describe('Payment Service', () => {
       const result = await paymentService.processRefund(
         'user-no-credit',
         10.0,
-        '0xtestaddress',
+        '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',
         'cash'
       );
 
@@ -72,7 +72,7 @@ describe('Payment Service', () => {
       expect(result.usdcPaid).toBe(10.0);
       expect(result.txHash).toBe('0xmockhash123');
       expect(mockCdpService.transfer).toHaveBeenCalledWith({
-        recipientAddress: '0xtestaddress',
+        recipientAddress: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',
         amount: '10',
         currency: 'USDC',
         orderId: expect.stringContaining('refund-')
@@ -86,7 +86,7 @@ describe('Payment Service', () => {
       const result = await paymentService.processRefund(
         'user-123',
         20.0,
-        '0xtesthybrid',
+        '0x9876543210987654321098765432109876543210',
         'cash'
       );
 
@@ -106,7 +106,7 @@ describe('Payment Service', () => {
       const result = await paymentService.processRefund(
         'user-test-hybrid',
         15.0,
-        '0xhybridtest',
+        '0xfedcbafedcbafedcbafedcbafedcbafedcba0000',
         'cash'
       );
 
@@ -115,7 +115,7 @@ describe('Payment Service', () => {
       expect(result.usdcPaid).toBe(10.0);
       expect(result.txHash).toBe('0xmockhash123');
       expect(mockCdpService.transfer).toHaveBeenCalledWith({
-        recipientAddress: '0xhybridtest',
+        recipientAddress: '0xfedcbafedcbafedcbafedcbafedcbafedcba0000',
         amount: '10',
         currency: 'USDC',
         orderId: expect.stringContaining('refund-')
@@ -150,6 +150,26 @@ describe('Payment Service', () => {
       expect(() => {
         ledgerService.deductCredit('user-123', 999999);
       }).toThrow('Insufficient credit');
+    });
+  });
+
+  describe('Rollback Protection', () => {
+    it('should not deduct credit if CDP transfer fails (rollback)', async () => {
+      // Mock CDP to fail
+      mockCdpService.transfer.mockRejectedValueOnce(new Error('Network error'));
+      
+      // Give user some credit
+      ledgerService.addCredit('user-rollback-test', 10.0);
+      const initialBalance = ledgerService.getBalance('user-rollback-test');
+      
+      // Attempt hybrid payment
+      await expect(
+        paymentService.processRefund('user-rollback-test', 20.0, '0x1234567890123456789012345678901234567890', 'cash')
+      ).rejects.toThrow('On-chain transfer failed');
+      
+      // Credit should be unchanged
+      const finalBalance = ledgerService.getBalance('user-rollback-test');
+      expect(finalBalance).toBe(initialBalance);
     });
   });
 });

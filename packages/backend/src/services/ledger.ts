@@ -8,7 +8,7 @@ export class LedgerService {
     // Seed with mock user
     this.ledgers.set('user-123', {
       balance: 5.0,
-      wallet: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb'
+      wallet: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0'  // Fixed: Added trailing 0 for 40 chars
     });
     logger.info('LedgerService initialized with mock user', { userId: 'user-123', balance: 5.0 });
   }

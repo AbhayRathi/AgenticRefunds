@@ -292,7 +292,7 @@ app.get('/api/refunds/ledger/:userId', (req, res) => {
   
   // Mock ledger data
   const mockLedgers: Record<string, any> = {
-    'user-123': { balance: 5.0, wallet: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb' },
+    'user-123': { balance: 5.0, wallet: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0' },
     'user-456': { balance: 10.0, wallet: '0x1234567890abcdef1234567890abcdef12345678' }
   };
 

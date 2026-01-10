@@ -58,7 +58,19 @@ export const SimulationRequestSchema = z.object({
   latencyMs: z.number().int().nonnegative().optional()
 });
 
+// Negotiate Refund Schema
+export const NegotiateRefundSchema = z.object({
+  orderId: z.string().min(1, 'Order ID required'),
+  customerId: z.string().min(1, 'Customer ID required'),
+  walletAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/, 'Invalid wallet address'),
+  choice: z.enum(['cash', 'credit']).refine(
+    (val) => ['cash', 'credit'].includes(val),
+    { message: 'Choice must be "cash" or "credit"' }
+  )
+});
+
 // Type exports for use in controllers
 export type RAGEvaluationRequest = z.infer<typeof RAGEvaluationRequestSchema>;
 export type RefundProcessRequest = z.infer<typeof RefundProcessRequestSchema>;
 export type SimulationRequest = z.infer<typeof SimulationRequestSchema>;
+export type NegotiateRefundRequest = z.infer<typeof NegotiateRefundSchema>;
