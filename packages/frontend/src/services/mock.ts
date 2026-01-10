@@ -36,7 +36,7 @@ export const mockService = {
 
     const responses: Record<number, Partial<ChatMessage>> = {
       0: {
-        content: "Hi! I see your order from Chipotle Mexican Grill just arrived. Is something wrong?",
+        content: "Hi! I see your order from MangoDB just arrived. Is something wrong?",
         suggestions: ["Wrong items delivered", "Food was cold", "Order never arrived"],
       },
       1: {

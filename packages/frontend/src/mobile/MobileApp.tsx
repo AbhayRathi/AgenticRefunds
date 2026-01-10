@@ -13,7 +13,7 @@ const DEMO_ORDERS: DemoOrder[] = [
   {
     id: 'order-1234',
     restaurant: {
-      name: 'Chipotle Mexican Grill',
+      name: 'MangoDB',
       image: '🌯',
       rating: 4.7,
     },

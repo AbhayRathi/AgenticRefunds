@@ -339,7 +339,7 @@ export const mockService = {
 
     const responses: Record<number, Partial<ChatMessage>> = {
       0: {
-        content: "Hi! I see your order from Chipotle Mexican Grill just arrived. Is something wrong?",
+        content: "Hi! I see your order from MangoDB just arrived. Is something wrong?",
         suggestions: ["Wrong items delivered", "Food was cold", "Order never arrived"],
       },
       1: {
@@ -591,7 +591,7 @@ const DEMO_ORDERS: DemoOrder[] = [
   {
     id: 'order-1234',
     restaurant: {
-      name: 'Chipotle Mexican Grill',
+      name: 'MangoDB',
       image: '🌯',
       rating: 4.7,
     },
