@@ -242,6 +242,69 @@ app.post('/api/refunds/simulate', validateRequest(SimulationRequestSchema), (req
   res.json({ systemLogs });
 });
 
+// Negotiate refund endpoint (hybrid payment)
+app.post('/api/refunds/negotiate', (req, res) => {
+  const { orderId, customerId, walletAddress, choice } = req.body;
+
+  if (!['cash', 'credit'].includes(choice)) {
+    res.status(400).json({ error: 'Invalid choice. Must be "cash" or "credit"' });
+    return;
+  }
+
+  const mockRefundAmount = 8.0;
+  const mockBalance = 5.0;
+
+  // Mock response based on choice
+  if (choice === 'credit') {
+    res.json({
+      orderId,
+      customerId,
+      approved: true,
+      baseAmount: mockRefundAmount,
+      bonusAmount: mockRefundAmount * 0.5,
+      totalAmount: mockRefundAmount * 1.5,
+      method: 'credit',
+      creditUsed: 0,
+      usdcPaid: 0,
+      newCreditBalance: mockBalance + mockRefundAmount * 1.5
+    });
+  } else {
+    // Mock hybrid payment
+    res.json({
+      orderId,
+      customerId,
+      approved: true,
+      baseAmount: mockRefundAmount,
+      bonusAmount: 0,
+      totalAmount: mockRefundAmount,
+      method: 'hybrid',
+      creditUsed: mockBalance,
+      usdcPaid: mockRefundAmount - mockBalance,
+      txHash: '0xmock' + Date.now(),
+      newCreditBalance: 0
+    });
+  }
+});
+
+// Get user ledger endpoint
+app.get('/api/refunds/ledger/:userId', (req, res) => {
+  const { userId } = req.params;
+  
+  // Mock ledger data
+  const mockLedgers: Record<string, any> = {
+    'user-123': { balance: 5.0, wallet: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb' },
+    'user-456': { balance: 10.0, wallet: '0x1234567890abcdef1234567890abcdef12345678' }
+  };
+
+  const ledger = mockLedgers[userId] || { balance: 0, wallet: 'Not set' };
+
+  res.json({
+    userId,
+    storeCreditBalance: ledger.balance,
+    walletAddress: ledger.wallet
+  });
+});
+
 // 404 handler
 app.use(notFoundHandler);
 
