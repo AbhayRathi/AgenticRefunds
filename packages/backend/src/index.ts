@@ -44,21 +44,49 @@ let ragService: RAGService;
 let cdpService: CDPService;
 let refundController: RefundController;
 
+function validateEnvironment(): void {
+  const required = [
+    'MONGODB_URI',
+    'GEMINI_API_KEY',
+    'CDP_API_KEY_NAME',
+    'CDP_PRIVATE_KEY'
+  ];
+  
+  const missing = required.filter(key => !process.env[key] || process.env[key] === '');
+  
+  if (missing.length > 0) {
+    logger.error(`Missing required environment variables: ${missing.join(', ')}`);
+    logger.error('Please copy .env.example to .env and fill in all values');
+    process.exit(1);
+  }
+  
+  // Validate MongoDB URI format
+  const mongoUri = process.env.MONGODB_URI!;
+  if (!mongoUri.startsWith('mongodb://') && !mongoUri.startsWith('mongodb+srv://')) {
+    logger.error('Invalid MONGODB_URI format');
+    process.exit(1);
+  }
+  
+  logger.info('Environment validation passed ✓');
+}
+
 async function initializeServices() {
   try {
+    validateEnvironment();
+    
     // MongoDB Service
-    const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017';
+    const mongoUri = process.env.MONGODB_URI!;
     mongoService = new MongoDBService(mongoUri);
     await mongoService.connect();
     await mongoService.insertSamplePolicies();
 
     // RAG Service
-    const geminiApiKey = process.env.GEMINI_API_KEY || '';
+    const geminiApiKey = process.env.GEMINI_API_KEY!;
     ragService = new RAGService(geminiApiKey, mongoService);
 
     // CDP Service
-    const cdpApiKeyName = process.env.CDP_API_KEY_NAME || '';
-    const cdpPrivateKey = process.env.CDP_PRIVATE_KEY || '';
+    const cdpApiKeyName = process.env.CDP_API_KEY_NAME!;
+    const cdpPrivateKey = process.env.CDP_PRIVATE_KEY!;
     cdpService = new CDPService(cdpApiKeyName, cdpPrivateKey);
     
     // Initialize wallet if wallet ID is provided
@@ -78,16 +106,45 @@ async function initializeServices() {
 }
 
 // Health check
-app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'ok', 
+app.get('/health', async (req, res) => {
+  const health: any = {
+    status: 'ok',
     timestamp: new Date().toISOString(),
-    services: {
-      mongodb: !!mongoService,
-      rag: !!ragService,
-      cdp: !!cdpService
+    services: {}
+  };
+  
+  // Check MongoDB
+  try {
+    if (mongoService) {
+      const collection = await mongoService.getPoliciesCollection();
+      await collection.findOne({});
+      health.services.mongodb = 'healthy';
+    } else {
+      health.services.mongodb = 'not initialized';
     }
-  });
+  } catch (error) {
+    health.services.mongodb = 'error';
+    health.status = 'degraded';
+  }
+  
+  // Check CDP
+  try {
+    if (cdpService) {
+      const balance = await cdpService.getBalance('usdc');
+      health.services.cdp = 'healthy';
+      health.services.cdpBalance = balance;
+    } else {
+      health.services.cdp = 'not initialized';
+    }
+  } catch (error) {
+    health.services.cdp = 'error';
+    health.status = 'degraded';
+  }
+  
+  // Check RAG/Gemini
+  health.services.rag = ragService ? 'initialized' : 'not initialized';
+  
+  res.json(health);
 });
 
 // x402 protected route example

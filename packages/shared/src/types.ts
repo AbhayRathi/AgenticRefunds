@@ -259,3 +259,25 @@ export const AgentSessionSchema = z.object({
 export type X402ToolType = z.infer<typeof X402ToolSchema>;
 export type AgentSessionType = z.infer<typeof AgentSessionSchema>;
 export type ThoughtLogEntryType = z.infer<typeof ThoughtLogEntrySchema>;
+
+// User Ledger Schema for hybrid payment system
+export const UserLedgerSchema = z.object({
+  userId: z.string(),
+  walletAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/),
+  storeCreditBalance: z.number().min(0),
+  lastUpdated: z.string().datetime()
+});
+
+export type UserLedger = z.infer<typeof UserLedgerSchema>;
+
+// X402 Tool Schema for payment orchestration
+export const X402ToolPaymentSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  category: z.enum(['Food', 'Logistics', 'Resolution']),
+  priceUsdc: z.number().min(0),
+  reliabilityScore: z.number().min(0).max(1),
+  supportsCredit: z.boolean().default(true)
+});
+
+export type X402ToolPayment = z.infer<typeof X402ToolPaymentSchema>;

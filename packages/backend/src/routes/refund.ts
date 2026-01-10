@@ -5,7 +5,8 @@ import { refundRateLimiter } from '../middleware/security';
 import {
   RAGEvaluationRequestSchema,
   RefundProcessRequestSchema,
-  SimulationRequestSchema
+  SimulationRequestSchema,
+  NegotiateRefundSchema
 } from '../validators/refund.validators';
 
 export function createRefundRoutes(refundController: RefundController): Router {
@@ -35,6 +36,16 @@ export function createRefundRoutes(refundController: RefundController): Router {
     validateRequest(SimulationRequestSchema),
     (req, res) => refundController.simulateDeliveryIssue(req, res)
   );
+
+  // Negotiate refund (credit vs cash choice)
+  router.post(
+    '/negotiate',
+    validateRequest(NegotiateRefundSchema),
+    (req, res) => refundController.negotiateRefund(req, res)
+  );
+
+  // Get user ledger balance
+  router.get('/ledger/:userId', (req, res) => refundController.getUserLedger(req, res));
 
   return router;
 }
