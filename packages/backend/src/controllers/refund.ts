@@ -9,12 +9,19 @@ import {
 } from '@delivery-shield/shared';
 import { RAGService } from '../services/rag';
 import { CDPService } from '../services/cdp';
+import { PaymentService } from '../services/payment';
+import { ledgerService } from '../services/ledger';
+import { logger } from '../config/logger';
 
 export class RefundController {
+  private paymentService: PaymentService;
+
   constructor(
     private ragService: RAGService,
     private cdpService: CDPService
-  ) {}
+  ) {
+    this.paymentService = new PaymentService(cdpService);
+  }
 
   async evaluateRefund(req: Request, res: Response): Promise<void> {
     try {
@@ -180,6 +187,62 @@ export class RefundController {
     } catch (error) {
       console.error('Simulation error:', error);
       res.status(500).json({ error: 'Failed to simulate issue' });
+    }
+  }
+
+  async negotiateRefund(req: Request, res: Response): Promise<void> {
+    try {
+      const { orderId, customerId, walletAddress, choice } = req.body;
+
+      // Validate choice
+      if (!['cash', 'credit'].includes(choice)) {
+        res.status(400).json({ error: 'Invalid choice. Must be "cash" or "credit"' });
+        return;
+      }
+
+      // For demo: assume refund already evaluated
+      // In real flow, you'd call ragService.evaluateRefund first
+      const mockRefundAmount = 8.0; // Hardcode for speed
+
+      const result = await this.paymentService.processRefund(
+        customerId,
+        mockRefundAmount,
+        walletAddress,
+        choice as 'cash' | 'credit'
+      );
+
+      const response = {
+        orderId,
+        customerId,
+        approved: true,
+        baseAmount: mockRefundAmount,
+        bonusAmount: choice === 'credit' ? mockRefundAmount * 0.5 : 0,
+        totalAmount: choice === 'credit' ? mockRefundAmount * 1.5 : mockRefundAmount,
+        ...result
+      };
+
+      logger.info('Negotiate refund completed', response);
+      res.json(response);
+    } catch (error) {
+      logger.error('Negotiate refund failed', { error });
+      res.status(500).json({ error: 'Failed to process negotiation' });
+    }
+  }
+
+  async getUserLedger(req: Request, res: Response): Promise<void> {
+    try {
+      const { userId } = req.params;
+      const balance = ledgerService.getBalance(userId);
+      const wallet = ledgerService.getWalletAddress(userId);
+
+      res.json({
+        userId,
+        storeCreditBalance: balance,
+        walletAddress: wallet || 'Not set'
+      });
+    } catch (error) {
+      logger.error('Get ledger failed', { error });
+      res.status(500).json({ error: 'Failed to fetch ledger' });
     }
   }
 }

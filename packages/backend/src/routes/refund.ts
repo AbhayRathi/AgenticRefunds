@@ -36,5 +36,11 @@ export function createRefundRoutes(refundController: RefundController): Router {
     (req, res) => refundController.simulateDeliveryIssue(req, res)
   );
 
+  // Negotiate refund (credit vs cash choice)
+  router.post('/negotiate', (req, res) => refundController.negotiateRefund(req, res));
+
+  // Get user ledger balance
+  router.get('/ledger/:userId', (req, res) => refundController.getUserLedger(req, res));
+
   return router;
 }
