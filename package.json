@@ -1,0 +1,28 @@
+{
+  "name": "delivery-shield",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Delivery Shield x402 refund system - Node/TS monorepo",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "dev": "npm run dev --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "keywords": [
+    "x402",
+    "refund",
+    "monorepo",
+    "delivery",
+    "blockchain"
+  ],
+  "author": "",
+  "license": "MIT"
+}
