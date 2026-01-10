@@ -2,6 +2,9 @@ import { ledgerService } from './ledger';
 import { CDPService } from './cdp';
 import { logger } from '../config/logger';
 
+// Constants
+const CREDIT_BONUS_MULTIPLIER = 1.5; // 50% bonus for credit refunds
+
 interface PaymentResult {
   method: 'credit' | 'cash' | 'hybrid';
   creditUsed: number;
@@ -13,6 +16,10 @@ interface PaymentResult {
 export class PaymentService {
   constructor(private cdpService: CDPService) {}
 
+  private generateOrderId(): string {
+    return `refund-${Date.now()}`;
+  }
+
   async processRefund(
     userId: string,
     refundAmount: number,
@@ -23,7 +30,7 @@ export class PaymentService {
 
     // CREDIT REFUND (with 50% bonus)
     if (preferredMethod === 'credit') {
-      const bonusAmount = refundAmount * 1.5; // 50% bonus
+      const bonusAmount = refundAmount * CREDIT_BONUS_MULTIPLIER;
       const newBalance = ledgerService.addCredit(userId, bonusAmount);
       
       logger.info('Credit refund processed with bonus', {
@@ -54,7 +61,7 @@ export class PaymentService {
         recipientAddress: walletAddress,
         amount: remainder.toString(),
         currency: 'USDC',
-        orderId: `refund-${Date.now()}`
+        orderId: this.generateOrderId()
       });
       
       const newBalance = ledgerService.getBalance(userId);
@@ -80,7 +87,7 @@ export class PaymentService {
       recipientAddress: walletAddress,
       amount: refundAmount.toString(),
       currency: 'USDC',
-      orderId: `refund-${Date.now()}`
+      orderId: this.generateOrderId()
     });
     
     const newBalance = ledgerService.getBalance(userId);

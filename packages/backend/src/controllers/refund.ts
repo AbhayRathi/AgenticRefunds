@@ -13,6 +13,9 @@ import { PaymentService } from '../services/payment';
 import { ledgerService } from '../services/ledger';
 import { logger } from '../config/logger';
 
+// Constants
+const DEMO_REFUND_AMOUNT = 8.0; // Hardcoded for demo; replace with RAG evaluation in production
+
 export class RefundController {
   private paymentService: PaymentService;
 
@@ -202,11 +205,9 @@ export class RefundController {
 
       // For demo: assume refund already evaluated
       // In real flow, you'd call ragService.evaluateRefund first
-      const mockRefundAmount = 8.0; // Hardcode for speed
-
       const result = await this.paymentService.processRefund(
         customerId,
-        mockRefundAmount,
+        DEMO_REFUND_AMOUNT,
         walletAddress,
         choice as 'cash' | 'credit'
       );
@@ -215,9 +216,9 @@ export class RefundController {
         orderId,
         customerId,
         approved: true,
-        baseAmount: mockRefundAmount,
-        bonusAmount: choice === 'credit' ? mockRefundAmount * 0.5 : 0,
-        totalAmount: choice === 'credit' ? mockRefundAmount * 1.5 : mockRefundAmount,
+        baseAmount: DEMO_REFUND_AMOUNT,
+        bonusAmount: choice === 'credit' ? DEMO_REFUND_AMOUNT * 0.5 : 0,
+        totalAmount: choice === 'credit' ? DEMO_REFUND_AMOUNT * 1.5 : DEMO_REFUND_AMOUNT,
         ...result
       };
 
