@@ -6,7 +6,11 @@ import { MongoDBService } from './services/mongodb';
 import { RAGService } from './services/rag';
 import { CDPService } from './services/cdp';
 import { RefundController } from './controllers/refund';
+import { ChatController } from './controllers/chat';
+import { TrustController } from './controllers/trust';
 import { createRefundRoutes } from './routes/refund';
+import { createChatRoutes } from './routes/chat';
+import { createTrustRoutes } from './routes/trust';
 import { x402Middleware } from './middleware/x402';
 import { securityMiddleware, rateLimiter } from './middleware/security';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
@@ -43,30 +47,41 @@ let mongoService: MongoDBService;
 let ragService: RAGService;
 let cdpService: CDPService;
 let refundController: RefundController;
+let chatController: ChatController;
+const trustController = new TrustController();
 
 function validateEnvironment(): void {
   const required = [
     'MONGODB_URI',
     'GEMINI_API_KEY',
+  ];
+
+  // CDP credentials are optional - demo will use fallbacks for refund processing
+  const optional = [
     'CDP_API_KEY_NAME',
     'CDP_PRIVATE_KEY'
   ];
-  
+
   const missing = required.filter(key => !process.env[key] || process.env[key] === '');
-  
+
   if (missing.length > 0) {
     logger.error(`Missing required environment variables: ${missing.join(', ')}`);
     logger.error('Please copy .env.example to .env and fill in all values');
     process.exit(1);
   }
-  
+
+  const missingOptional = optional.filter(key => !process.env[key] || process.env[key] === '');
+  if (missingOptional.length > 0) {
+    logger.warn(`Optional environment variables not set: ${missingOptional.join(', ')} - CDP features will use fallbacks`);
+  }
+
   // Validate MongoDB URI format
   const mongoUri = process.env.MONGODB_URI!;
   if (!mongoUri.startsWith('mongodb://') && !mongoUri.startsWith('mongodb+srv://')) {
     logger.error('Invalid MONGODB_URI format');
     process.exit(1);
   }
-  
+
   logger.info('Environment validation passed ✓');
 }
 
@@ -84,19 +99,25 @@ async function initializeServices() {
     const geminiApiKey = process.env.GEMINI_API_KEY!;
     ragService = new RAGService(geminiApiKey, mongoService);
 
-    // CDP Service
-    const cdpApiKeyName = process.env.CDP_API_KEY_NAME!;
-    const cdpPrivateKey = process.env.CDP_PRIVATE_KEY!;
-    cdpService = new CDPService(cdpApiKeyName, cdpPrivateKey);
-    
-    // Initialize wallet if wallet ID is provided
-    const walletId = process.env.CDP_WALLET_ID;
-    if (walletId) {
-      await cdpService.initializeWallet(walletId);
+    // CDP Service (optional - only initialize if credentials provided)
+    const cdpApiKeyName = process.env.CDP_API_KEY_NAME;
+    const cdpPrivateKey = process.env.CDP_PRIVATE_KEY;
+    if (cdpApiKeyName && cdpPrivateKey) {
+      cdpService = new CDPService(cdpApiKeyName, cdpPrivateKey);
+
+      // Initialize wallet if wallet ID is provided
+      const walletId = process.env.CDP_WALLET_ID;
+      if (walletId) {
+        await cdpService.initializeWallet(walletId);
+      }
+      logger.info('CDP Service initialized');
+    } else {
+      logger.warn('CDP credentials not provided - refund processing will use fallbacks');
     }
 
-    // Controllers
+    // Controllers (cdpService may be undefined if not configured)
     refundController = new RefundController(ragService, cdpService);
+    chatController = new ChatController(ragService);
 
     logger.info('All services initialized successfully');
   } catch (error) {
@@ -162,6 +183,12 @@ app.post('/api/x402-protected',
 initializeServices().then(() => {
   // Refund routes
   app.use('/api/refunds', createRefundRoutes(refundController));
+
+  // Chat routes
+  app.use('/api/chat', createChatRoutes(chatController));
+
+  // Trust routes
+  app.use('/api/trust', createTrustRoutes(trustController));
 
   // 404 handler
   app.use(notFoundHandler);
